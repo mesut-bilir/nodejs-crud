@@ -1,19 +1,14 @@
-const express = require("express");
-const bodyParser = require("body-parser"); 
-const cors = require("cors");
+const express= require('express');
+const app=express();
+const errorMiddleware = require('./app/middlewares/error')
 
-const app = express();
-
-app.use(cors())
-
-app.use(express.json()); 
-app.use(bodyParser.urlencoded({ extended: true }));  
-
+//database connection with our MongoDB
 const db = require("./app/models");
 db.mongoose
   .connect(db.url, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    useCreateIndex: true
   })
   .then(() => {
     console.log("Connected to the database!");
@@ -23,15 +18,22 @@ db.mongoose
     process.exit();
   });
 
-// simple route
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to application." });
-});
+//express middleware
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json())
 
+//CORS middleware 
+const cors = require("cors");
+app.use(cors())
+
+//route
 require("./app/routes/customer.routes")(app);
+require("./app/routes/user.routes")(app);
+
+app.use(errorMiddleware)
 
 // set port, listen for requests
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
